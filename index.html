@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0a0f1e">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Control Samsung</title>
+<style>
+:root{
+  --bg:#0a0f1e; --btn1:#1b2744; --btn2:#111a31; --panel:#121b33;
+  --txt:#eef2ff; --muted:#8a96b8; --line:rgba(255,255,255,.06);
+  --red:#ef4444; --ok:#22c55e; --accent:#3b82f6;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--txt);height:100%}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  touch-action:manipulation;overflow-x:hidden}
+.wrap{max-width:440px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:16px;min-height:100%}
+.row{display:grid;gap:14px}
+.r3{grid-template-columns:1fr 1fr 1fr}
+.r2{grid-template-columns:1fr 1fr}
+.top{grid-template-columns:72px 1fr 72px}
+.b{height:68px;border:none;border-radius:26px;color:var(--txt);font:600 17px/1 inherit;letter-spacing:.5px;
+  background:linear-gradient(180deg,var(--btn1),var(--btn2));
+  box-shadow:0 6px 14px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .08s,filter .08s}
+.b:active,.b.press{transform:scale(.95);filter:brightness(1.35)}
+.b svg{width:30px;height:30px}
+.power svg{color:var(--red)}
+.status{flex-direction:column;gap:6px;font-size:15px}
+.status small{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:0}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#64748b;margin-right:6px;vertical-align:middle}
+.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.num{flex-direction:column;gap:8px}
+.cdots{display:flex;gap:7px}.cdots i{width:13px;height:13px;border-radius:50%}
+.panel{background:linear-gradient(180deg,#141e38,#0f1730);border-radius:36px;padding:18px 14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 24px rgba(0,0,0,.4);
+  display:grid;grid-template-columns:72px 1fr 72px;align-items:center;gap:8px}
+.col{display:flex;flex-direction:column;align-items:center;justify-content:space-between;height:100%;gap:18px}
+.col .b{width:68px;height:68px;border-radius:24px}
+.col .lbl{font-weight:600;font-size:17px;color:var(--txt)}
+.col .lbl svg{width:34px;height:34px}
+.dpad{position:relative;aspect-ratio:1;width:100%;max-width:250px;justify-self:center;border-radius:50%;
+  background:radial-gradient(circle at 50% 40%,#1d2a4b,#121b34 70%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.05),0 8px 20px rgba(0,0,0,.5)}
+.dpad button{position:absolute;border:none;background:transparent;color:#9aa3b8;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dpad .u,.dpad .d{left:30%;width:40%;height:30%}.dpad .u{top:0}.dpad .d{bottom:0}
+.dpad .l,.dpad .r{top:30%;height:40%;width:30%}.dpad .l{left:0}.dpad .r{right:0}
+.dpad .ok{top:30%;left:30%;width:40%;height:40%;border-radius:50%;color:var(--txt);font:600 22px inherit}
+.dpad button:active,.dpad button.press{color:#fff;background:rgba(255,255,255,.07);border-radius:50%}
+.dpad svg{width:26px;height:26px}
+.app{font-weight:800;font-size:18px;letter-spacing:.3px}
+.app.nf{color:#e50914}.app.yt{color:#fff}.app.pv{color:#38bdf8}
+.grid9{display:grid;grid-template-columns:repeat(3,7px);gap:3px}.grid9 i{width:7px;height:7px;border-radius:2px}
+/* sheets */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;z-index:20}
+.ov.show{display:flex}
+.sheet{width:100%;max-width:440px;margin:0 auto;background:#121a30;border-radius:28px 28px 0 0;
+  padding:18px 16px max(22px,env(safe-area-inset-bottom));max-height:85vh;overflow:auto;animation:up .2s ease}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.sheet h3{font-size:18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.sheet h3 button{background:none;border:none;color:var(--muted);font-size:26px;cursor:pointer}
+.sheet .b{height:60px;font-size:20px}
+.sheet label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+.sheet input,.sheet select{width:100%;height:52px;border-radius:16px;border:1px solid var(--line);background:#0b1224;
+  color:var(--txt);padding:0 14px;font-size:17px;user-select:text;-webkit-user-select:text}
+.primary{background:linear-gradient(180deg,#2563eb,#1d4ed8)!important}
+.hint{font-size:13px;color:var(--muted);line-height:1.5;margin-top:12px}
+.hint a{color:#93c5fd}
+.applist{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.applist .b{font-size:15px;height:64px;padding:0 8px;text-align:center;line-height:1.2}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 18px;
+  border-radius:14px;font-size:14px;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;z-index:30;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="row top">
+    <button class="b power" data-key="KEY_POWER" aria-label="Encender/Apagar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>
+    </button>
+    <button class="b status" id="statusBtn">
+      <span><span class="dot" id="dot"></span><span id="statusTxt">Conectar TV</span></span>
+      <small id="ipTxt">Toca para configurar</small>
+    </button>
+    <button class="b" data-sheet="settings" aria-label="Ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"/><circle cx="16" cy="8" r="2.2"/><circle cx="8" cy="16" r="2.2"/></svg>
+    </button>
+  </div>
+
+  <div class="row r2">
+    <button class="b" data-key="KEY_MUTE" aria-label="Silencio">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9h4l5-4v14l-5-4H3z"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button class="b num" data-sheet="numpad">
+      <span style="letter-spacing:8px">1 2 3</span>
+      <span class="cdots"><i style="background:#ef4444"></i><i style="background:#22c55e"></i><i style="background:#eab308"></i><i style="background:#3b82f6"></i></span>
+    </button>
+  </div>
+
+  <div class="row r3">
+    <button class="b" data-key="KEY_INFO" aria-label="Info">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 10.5v6M12 7.3v.2" stroke="#111a31" stroke-width="2.6" stroke-linecap="round"/></svg>
+    </button>
+    <button class="b" data-key="KEY_GUIDE">GUÍA</button>
+    <button class="b" data-key="KEY_MENU">MENÚ</button>
+  </div>
+
+  <div class="panel">
+    <div class="col">
+      <button class="b" data-key="KEY_VOLUP" data-repeat aria-label="Subir volumen"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></button>
+      <span class="lbl"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9h4l5-4v14l-5-4H3z"/><path d="M15 9a4 4 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+      <button class="b" data-key="KEY_VOLDOWN" data-repeat aria-label="Bajar volumen"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 12h16"/></svg></button>
+    </div>
+    <div class="dpad">
+      <button class="u" data-key="KEY_UP" data-repeat aria-label="Arriba"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 6l7 11H5z"/></svg></button>
+      <button class="l" data-key="KEY_LEFT" data-repeat aria-label="Izquierda"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 12l11-7v14z"/></svg></button>
+      <button class="ok" data-key="KEY_ENTER">OK</button>
+      <button class="r" data-key="KEY_RIGHT" data-repeat aria-label="Derecha"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 12L7 19V5z"/></svg></button>
+      <button class="d" data-key="KEY_DOWN" data-repeat aria-label="Abajo"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 18L5 7h14z"/></svg></button>
+    </div>
+    <div class="col">
+      <button class="b" data-key="KEY_CHUP" data-repeat aria-label="Canal arriba"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></button>
+      <span class="lbl">CH</span>
+      <button class="b" data-key="KEY_CHDOWN" data-repeat aria-label="Canal abajo"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 12h16"/></svg></button>
+    </div>
+  </div>
+
+  <div class="row r3">
+    <button class="b" data-key="KEY_RETURN" aria-label="Atrás"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5L5 9l4 4"/><path d="M5 9h9a5 5 0 0 1 0 10h-4"/></svg></button>
+    <button class="b" data-key="KEY_HOME" aria-label="Inicio"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3z"/></svg></button>
+    <button class="b" data-key="KEY_SOURCE" aria-label="Fuente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h11M10 8l4 4-4 4"/><path d="M16 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3"/></svg></button>
+  </div>
+
+  <div class="row r3">
+    <button class="b app pv" data-app="3201910019365">Prime Video</button>
+    <button class="b app nf" data-app="3201907018807">NETFLIX</button>
+    <button class="b app yt" data-app="111299001912">▶ YouTube</button>
+  </div>
+
+  <div class="row r3">
+    <button class="b" data-sheet="apps" aria-label="Apps">
+      <span class="grid9"><i style="background:#4ade80"></i><i style="background:#facc15"></i><i style="background:#fb923c"></i><i style="background:#f87171"></i><i style="background:#cbd5e1"></i><i style="background:#f472b6"></i><i style="background:#a78bfa"></i><i style="background:#60a5fa"></i><i style="background:#34d399"></i></span>
+    </button>
+    <button class="b" id="playBtn" aria-label="Reproducir/Pausa"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5l9 7-9 7z"/><path d="M15 5h2.5v14H15zM19.5 5H22v14h-2.5z"/></svg></button>
+    <button class="b" data-sheet="keyboard" aria-label="Teclado"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="20" height="14" rx="2.5"/><g fill="#111a31"><rect x="5" y="8" width="2" height="2"/><rect x="8.5" y="8" width="2" height="2"/><rect x="12" y="8" width="2" height="2"/><rect x="15.5" y="8" width="2" height="2"/><rect x="5" y="11.5" width="2" height="2"/><rect x="8.5" y="11.5" width="2" height="2"/><rect x="12" y="11.5" width="2" height="2"/><rect x="15.5" y="11.5" width="2" height="2"/><rect x="7" y="15" width="10" height="1.8"/></g></svg></button>
+  </div>
+</div>
+
+<!-- Ajustes -->
+<div class="ov" id="sh-settings"><div class="sheet">
+  <h3>Conexión con la TV <button data-close>×</button></h3>
+  <label>IP del televisor</label>
+  <input id="ipIn" inputmode="decimal" placeholder="Ej. 192.168.1.45">
+  <label>Puerto</label>
+  <select id="portIn"><option value="8002">8002 (seguro · TVs 2018+)</option><option value="8001">8001 (modelos anteriores)</option></select>
+  <div class="row r2" style="margin-top:18px">
+    <button class="b" id="resetBtn" style="font-size:15px">Olvidar TV</button>
+    <button class="b primary" id="saveBtn" style="font-size:16px">Guardar y conectar</button>
+  </div>
+  <p class="hint">La IP está en la TV: <b>Configuración › General › Red › Estado de red</b>. El celular debe estar en el mismo Wi‑Fi.<br>
+  La primera vez la TV mostrará un aviso: elige <b>Permitir</b>.<br>
+  Si usas el puerto 8002 y no conecta, abre <a id="certLink" href="#" target="_blank">https://IP:8002</a> en Chrome, acepta la advertencia de seguridad y vuelve aquí.</p>
+</div></div>
+
+<!-- Teclado numérico -->
+<div class="ov" id="sh-numpad"><div class="sheet">
+  <h3>Números y colores <button data-close>×</button></h3>
+  <div class="row r3" id="numGrid"></div>
+  <div class="row" style="grid-template-columns:repeat(4,1fr);margin-top:14px">
+    <button class="b" data-key="KEY_RED" style="background:#b91c1c"></button>
+    <button class="b" data-key="KEY_GREEN" style="background:#15803d"></button>
+    <button class="b" data-key="KEY_YELLOW" style="background:#a16207"></button>
+    <button class="b" data-key="KEY_CYAN" style="background:#1d4ed8"></button>
+  </div>
+</div></div>
+
+<!-- Apps -->
+<div class="ov" id="sh-apps"><div class="sheet">
+  <h3>Aplicaciones <button data-close>×</button></h3>
+  <div class="applist" id="appList"></div>
+  <p class="hint" id="appHint"></p>
+</div></div>
+
+<!-- Teclado -->
+<div class="ov" id="sh-keyboard"><div class="sheet">
+  <h3>Escribir en la TV <button data-close>×</button></h3>
+  <input id="txtIn" placeholder="Escribe y envía…" autocomplete="off">
+  <div class="row r2" style="margin-top:14px">
+    <button class="b" data-key="KEY_RETURN" style="font-size:16px">Borrar / Atrás</button>
+    <button class="b primary" id="sendTxt" style="font-size:16px">Enviar</button>
+  </div>
+  <p class="hint">Primero abre un campo de búsqueda en la TV (YouTube, Netflix, navegador…) y luego envía el texto.</p>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s);
+  const LS='samsungRemoteCfg';
+  let cfg={ip:'192.168.40.65',port:'8002',token:''};
+  try{Object.assign(cfg,JSON.parse(localStorage.getItem(LS)||'{}'))}catch(e){}
+  const save=()=>{try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}};
+
+  const DEFAULT_APPS=[
+    {name:'Netflix',id:'3201907018807'},{name:'YouTube',id:'111299001912'},
+    {name:'Prime Video',id:'3201910019365'},{name:'Disney+',id:'3201901017640'},
+    {name:'Spotify',id:'3201606009684'},{name:'Apple TV',id:'3201807016597'}
+  ];
+  let installed=null, ws=null, connected=false, playing=true, triedFallback=false;
+
+  function toast(t,ms=2600){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms)}
+  function setStatus(t,on){ $('#statusTxt').textContent=t; $('#dot').classList.toggle('on',!!on); $('#ipTxt').textContent=cfg.ip?('TV '+cfg.ip):'Toca para configurar'; }
+  const buzz=()=>{try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}};
+
+  function connect(){
+    if(!cfg.ip){openSheet('settings');return}
+    try{ws&&ws.close()}catch(e){}
+    const secure=cfg.port==='8002';
+    let url=(secure?'wss':'ws')+'://'+cfg.ip+':'+cfg.port+'/api/v2/channels/samsung.remote.control?name='+btoa('Control Remoto');
+    if(cfg.token) url+='&token='+cfg.token;
+    setStatus('Conectando…');
+    try{ ws=new WebSocket(url) }catch(e){ return onFail() }
+    const to=setTimeout(()=>{ if(!connected){ setStatus('Acepta en la TV'); toast('Revisa la TV y elige “Permitir”',4000)} },3500);
+    ws.onmessage=e=>{
+      let m; try{m=JSON.parse(e.data)}catch(_){return}
+      if(m.event==='ms.channel.connect'){
+        clearTimeout(to); connected=true; triedFallback=false;
+        if(m.data&&m.data.token){cfg.token=m.data.token;save()}
+        setStatus('Conectado',true); buzz(); requestApps();
+      }else if(m.event==='ms.channel.unauthorized'){
+        setStatus('Sin permiso'); toast('La TV rechazó la conexión. Permítela en la TV.',4000);
+      }else if(m.event==='ed.installedApp.get'){
+        try{ installed=m.data.data.map(a=>({name:a.name,id:a.appId})).sort((a,b)=>a.name.localeCompare(b.name)); renderApps() }catch(_){}
+      }
+    };
+    ws.onclose=()=>{ clearTimeout(to); if(connected){toast('Conexión cerrada')} connected=false; setStatus('Desconectado'); };
+    ws.onerror=()=>{ clearTimeout(to); if(!connected) onFail() };
+  }
+  function onFail(){
+    connected=false;
+    if(cfg.port==='8002' && !triedFallback){
+      triedFallback=true; toast('Probando puerto 8001…');
+      cfg.port='8001'; connect(); cfg.port='8002'; return;
+    }
+    triedFallback=false;
+    setStatus('Sin conexión');
+    toast('No se pudo conectar. Revisa IP y Wi‑Fi, o acepta el certificado en Ajustes.',4500);
+  }
+  function ready(){ if(ws&&ws.readyState===1) return true; toast('TV no conectada'); if(!ws||ws.readyState>1) connect(); return false }
+  function key(k){ if(!ready())return; ws.send(JSON.stringify({method:'ms.remote.control',params:{Cmd:'Click',DataOfCmd:k,Option:'false',TypeOfRemote:'SendRemoteKey'}})); buzz() }
+  function launch(id){ if(!ready())return; ws.send(JSON.stringify({method:'ms.channel.emit',params:{event:'ed.apps.launch',to:'host',data:{appId:id,action_type:'DEEP_LINK'}}})); buzz(); closeSheets() }
+  function requestApps(){ try{ws.send(JSON.stringify({method:'ms.channel.emit',params:{event:'ed.installedApp.get',to:'host'}}))}catch(e){} }
+  function sendText(t){ if(!t||!ready())return; const b=btoa(unescape(encodeURIComponent(t)));
+    ws.send(JSON.stringify({method:'ms.remote.control',params:{Cmd:b,DataOfCmd:'base64',TypeOfRemote:'SendInputString'}}));
+    ws.send(JSON.stringify({method:'ms.remote.control',params:{TypeOfRemote:'SendInputEnd'}})); buzz(); toast('Texto enviado') }
+
+  // Botones con tecla (con repetición al mantener presionado)
+  document.querySelectorAll('[data-key]').forEach(btn=>{
+    let t1,t2;
+    const stop=()=>{clearTimeout(t1);clearInterval(t2);btn.classList.remove('press')};
+    btn.addEventListener('pointerdown',e=>{
+      e.preventDefault(); btn.classList.add('press'); key(btn.dataset.key);
+      if(btn.hasAttribute('data-repeat')){ t1=setTimeout(()=>{t2=setInterval(()=>key(btn.dataset.key),130)},450) }
+    });
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,stop));
+    btn.addEventListener('contextmenu',e=>e.preventDefault());
+  });
+  document.querySelectorAll('[data-app]').forEach(b=>b.addEventListener('click',()=>launch(b.dataset.app)));
+  $('#playBtn').addEventListener('click',()=>{ key(playing?'KEY_PAUSE':'KEY_PLAY'); playing=!playing });
+
+  // Hojas
+  function openSheet(n){ closeSheets(); $('#sh-'+n).classList.add('show');
+    if(n==='settings'){ $('#ipIn').value=cfg.ip; $('#portIn').value=cfg.port; updCert() }
+    if(n==='apps'){ renderApps(); if(connected) requestApps() }
+    if(n==='keyboard'){ setTimeout(()=>$('#txtIn').focus(),150) } }
+  function closeSheets(){ document.querySelectorAll('.ov').forEach(o=>o.classList.remove('show')) }
+  document.querySelectorAll('[data-sheet]').forEach(b=>b.addEventListener('click',()=>openSheet(b.dataset.sheet)));
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeSheets));
+  document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeSheets()}));
+
+  // Números
+  const ng=$('#numGrid');
+  ['1','2','3','4','5','6','7','8','9','PRECH','0','ENTER'].forEach(k=>{
+    const b=document.createElement('button'); b.className='b';
+    b.textContent=k==='PRECH'?'PRE-CH':k==='ENTER'?'OK':k;
+    b.addEventListener('pointerdown',e=>{e.preventDefault();key('KEY_'+k)}); ng.appendChild(b);
+  });
+
+  function renderApps(){
+    const list=installed&&installed.length?installed:DEFAULT_APPS, el=$('#appList'); el.innerHTML='';
+    list.forEach(a=>{const b=document.createElement('button');b.className='b';b.textContent=a.name;b.onclick=()=>launch(a.id);el.appendChild(b)});
+    $('#appHint').textContent=installed?'Apps instaladas en tu TV.':'Apps comunes. Al conectar se cargan las instaladas en tu TV.';
+  }
+
+  // Ajustes
+  function updCert(){ const ip=$('#ipIn').value.trim()||'IP'; const a=$('#certLink'); a.textContent='https://'+ip+':8002'; a.href='https://'+ip+':8002' }
+  $('#ipIn').addEventListener('input',updCert);
+  $('#saveBtn').addEventListener('click',()=>{
+    const ip=$('#ipIn').value.trim(); if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)){toast('Escribe una IP válida');return}
+    if(ip!==cfg.ip) cfg.token=''; cfg.ip=ip; cfg.port=$('#portIn').value; save(); closeSheets(); connect();
+  });
+  $('#resetBtn').addEventListener('click',()=>{ cfg={ip:'',port:'8002',token:''}; save(); try{ws&&ws.close()}catch(e){} installed=null; setStatus('Conectar TV'); $('#ipIn').value=''; updCert(); toast('TV olvidada') });
+  $('#statusBtn').addEventListener('click',()=>{ connected?toast('Conectado a '+cfg.ip):connect() });
+  $('#sendTxt').addEventListener('click',()=>{ sendText($('#txtIn').value); $('#txtIn').value='' });
+  $('#txtIn').addEventListener('keydown',e=>{ if(e.key==='Enter'){ sendText(e.target.value); e.target.value='' } });
+
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden && cfg.ip && (!ws||ws.readyState>1)) connect() });
+
+  setStatus('Conectar TV');
+  if(cfg.ip) connect();
+})();
+</script>
+</body>
+</html>
